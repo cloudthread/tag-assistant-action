@@ -1,0 +1,37 @@
+name: "CloudThread Tag Assistant check"
+description: "Checks if Terraform modules have default tag present in AWS provider configuration"
+inputs:
+  modules-path:
+    required: false
+    description: "Terraform modules to inspect path"
+  cloudthread-token:
+    required: true
+    description: "The token to authenticate with CloudThread API endpoint"
+  aws-access-key-id:
+    required: true
+    description: "AWS access key to perform ECR login"
+  aws-secret-access-key:
+    required: true
+    description: "AWS secret key"
+runs:
+  using: "composite"
+  steps:
+    - name: "Configure AWS credentials"
+      uses: aws-actions/configure-aws-credentials@v1-node16
+      with:
+        aws-access-key-id: ${{ inputs.aws-access-key-id }}
+        aws-secret-access-key: ${{ inputs.aws-secret-access-key }}
+        aws-region: us-west-2
+    - name: Login to Amazon ECR
+      id: ecr-login
+      uses: aws-actions/amazon-ecr-login@v1.4.0
+    - name: Run TA docker image
+      uses: addnab/docker-run-action@v3
+      with:
+          username: ${{ steps.ecr-login.outputs.docker_username_026321830342_dkr_ecr_us_west_2_amazonaws_com }}
+          password: ${{ steps.ecr-login.outputs.docker_password_026321830342_dkr_ecr_us_west_2_amazonaws_com }}
+          registry: 026321830342.dkr.ecr.us-west-2.amazonaws.com
+          image: 026321830342.dkr.ecr.us-west-2.amazonaws.com/tag-assistant:action
+          options: -v ${{ github.workspace }}:/opt/repo
+          run: |
+              ./opt/ta/cloudthread-assistant --base-branch=${{ github.head_ref }} /opt/repo/${{ inputs.modules-path }} --ghtoken=${{ github.token }} --repo=${{ github.repository }} --token=${{ inputs.cloudthread-token }}
