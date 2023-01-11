@@ -14,7 +14,7 @@ inputs:
       Terraform configuration in this repository
     required: true
   tag-assistant-version:
-    default: 2.2
+    default: 2.2.1
     description: "Version to run"
   api-root:
     description: CloudThread API URL
